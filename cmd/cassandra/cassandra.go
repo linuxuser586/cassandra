@@ -136,7 +136,7 @@ func setVM() {
 		fmt.Fprintf(stderr, "could not convert vm.max_map_count to integer: %v\n", err)
 	}
 	if i < 1048575 {
-		fmt.Printf("vm.max_map_count is %v and must be greater or equal to 1048575", i)
+		fmt.Printf("vm.max_map_count is %v and must be greater or equal to 1048575\n", i)
 		fmt.Println("for Docker, use --privileged with the run command ")
 		fmt.Println("or run sudo sysctl -w vm.max_map_count=1048575 on the host system")
 		log.Fatalln("for Kubernetes, run the initContainer")
@@ -178,13 +178,29 @@ func setFDPermission() {
 }
 
 func updateYAML() {
-	if _, err := goos.Stat(customYAML); err != nil {
-		fmt.Println("using default cassandra.yaml")
-		return
-	}
 	cas, err := ioutil.ReadFile(casYAML)
 	if err != nil {
 		log.Fatalf("failed to read cassandra.yaml: %v\n", err)
+	}
+	if _, err := goos.Stat(customYAML); err != nil {
+		fmt.Println("using default cassandra.yaml")
+		conf := config.CassandraYAML{}
+		if err = yaml.Unmarshal(cas, &conf); err != nil {
+			log.Fatalf("failed to unmarshal default conf: %v\n", err)
+		}
+		conf.ListenAddress = ip
+		conf.BroadcastRPCAddress = ip
+		conf.RPCAddress = "0.0.0.0"
+		conf.SeedProvider[0].Parameters[0].Seeds = ip
+		o, err := yaml.Marshal(&conf)
+		if err != nil {
+			log.Fatalf("failed to marshal cassandra.yaml: %v\n", err)
+		}
+		err = ioutil.WriteFile(casYAML, []byte(o), 0644)
+		if err != nil {
+			log.Fatalf("failed to write cassandra.yaml: %v\n", err)
+		}
+		return
 	}
 	cus, err := ioutil.ReadFile(customYAML)
 	if err != nil {

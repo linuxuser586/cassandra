@@ -11,6 +11,7 @@ import (
 	"github.com/linuxuser586/cassandra/cmd/nodetool"
 	"github.com/linuxuser586/cassandra/cmd/readyprobe"
 	"github.com/linuxuser586/cassandra/pkg/cert"
+	"github.com/linuxuser586/cassandra/pkg/normalize"
 	"github.com/linuxuser586/cassandra/pkg/server/rpc"
 )
 
@@ -29,8 +30,11 @@ func main() {
 		if err := link(); err != nil {
 			log.Fatal(err)
 		}
-		if err := cert.Setup(); err != nil {
-			log.Fatal(err)
+		tls := os.Getenv("NO_TLS")
+		if !normalize.True(tls) {
+			if err := cert.Setup(); err != nil {
+				log.Fatal(err)
+			}
 		}
 		go rpc.Start()
 		cassandra.Start()
