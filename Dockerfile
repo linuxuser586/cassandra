@@ -7,8 +7,8 @@ COPY . .
 
 RUN make dist
 
-# 3.11.4-base
-FROM linuxuser586/cassandra@sha256:565ebe26c3d221f80188f22ce3075ef69705bbe1aec3c9a59824102e796a3dce
+# 3.11.5-base
+FROM linuxuser586/cassandra@sha256:aee8292cb803c416e92f7d1581cc73ed0d1da270a03d83a4f8ee25297ed691ac
 
 COPY --from=build /go/src/github.com/linuxuser586/cassandra/build/* /usr/local/bin/
 
